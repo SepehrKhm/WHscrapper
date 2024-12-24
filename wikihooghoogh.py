@@ -1,13 +1,13 @@
 import os
 import asyncio
-import aiohttp
+import aiohttp  # type: ignore
 import pandas as pd
 from bs4 import BeautifulSoup
 from itertools import cycle
 import re
 
-input_file = 'urls_wikihoghoogh(1).csv'
-output_file = 'laws_wikihoghoogh.csv'
+input_file = 'urls_wikihoghoogh(3).csv'
+output_file = 'laws_wikihoghoogh(temp).csv'
 proxy_file = 'IRproxy.csv'
 
 def load_proxies(proxy_file):
@@ -32,11 +32,16 @@ def process_html(html):
     if content:
         paragraphs = []
         for tag in content.children:
-            if tag.name == 'ul':
+            if tag.name == 'p': 
+                text = tag.text.strip()
+                text = text.replace("مشاهده ماده قبلی", "").replace("مشاهده ماده بعدی", "").strip()
+                paragraphs.append(text)
+            if tag.name == 'ol': 
+                for li in tag.find_all('li'):
+                    paragraphs.append(li.text.strip())
+            if tag.name in ['ul', 'h2', 'div']: 
                 break
-            if tag.name == 'p':
-                paragraphs.append(tag.text.strip())
-        return ' '.join(paragraphs)
+        return ' '.join(paragraphs).replace("\n", " ").strip() 
     return ""
 
 async def extract_text(url, session, proxy):
